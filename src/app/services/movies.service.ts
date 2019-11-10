@@ -1,6 +1,6 @@
 import { Injectable, Query } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { RespuestaTMDB } from '../interfaces/interfaces';
+import { RespuestaTMDB, DetallePelicula, DetalleCreditos } from '../interfaces/interfaces';
 import { environment } from 'src/environments/environment.prod';
 
 const URL = environment.url;
@@ -10,6 +10,8 @@ const APIKEY = environment.apiKey;
   providedIn: 'root'
 })
 export class MoviesService {
+
+  private popularesPage = 0;
 
   constructor(private http: HttpClient) {}
 
@@ -32,12 +34,32 @@ export class MoviesService {
     return this.ejecutarQuery<RespuestaTMDB>(`/discover/movie?primary_release_date.gte=${ inicio }&primary_release_date.lte=${ fin }`);
   }
 
+
+  getPopulares() {
+    this.popularesPage++;
+    const query = `/discover/movie?sort_by=popularity.desc&page=${this.popularesPage}`;
+    return this.ejecutarQuery<RespuestaTMDB>(query);
+  }
+
+  getPeliculaDetalle(id: string) {
+    return this.ejecutarQuery<DetallePelicula>(`/movie/${id}`, true);
+  }
+
+  getActoresDetalle(id: string) {
+    return this.ejecutarQuery<DetalleCreditos>(`/movie/${id}/credits`, true);
+  }
+
+  buscarPeliculas(texto: string) {
+    return this.ejecutarQuery<RespuestaTMDB>(`/search/movie?query=${texto}`);
+  }
+
   /****************
    Private and utils
    ****************/
-  private ejecutarQuery<T>(query: string) {
+  private ejecutarQuery<T>(query: string, amper?: boolean) {
     query = URL + query;
-    query += `&api_key=${ APIKEY }&language=es&include_image_language=es`;
+    query += (amper) ? '?' : '&';
+    query += `api_key=${ APIKEY }&language=es&include_image_language=es`;
     return this.http.get<T>(query);
   }
 }
